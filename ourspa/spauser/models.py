@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
+import uuid
 
 
 class SpaUserManager(BaseUserManager):
@@ -35,6 +36,7 @@ class SpaUser(AbstractBaseUser):
     email = models.EmailField(verbose_name='email address', max_length=255, unique=True)
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
+    jwt_secret = models.UUIDField(default=uuid.uuid4)
 
     objects = SpaUserManager()
 
