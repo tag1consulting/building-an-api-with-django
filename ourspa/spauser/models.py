@@ -3,6 +3,9 @@ from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 import uuid
 
 
+def jwt_get_secret_key(user_model):
+    return user_model.jwt_secret
+
 class SpaUserManager(BaseUserManager):
     def create_user(self, email, password=None):
         """
