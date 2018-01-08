@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django_otp import devices_for_user
 from django_otp.plugins.otp_totp.models import TOTPDevice
+from otp.utils import get_custom_jwt
 
 
 def get_user_totp_device(self, user, confirmed=None):
@@ -39,4 +40,21 @@ class TOTPVerifyView(views.APIView):
                 device.confirmed = True
                 device.save()
             return Response(True, status=status.HTTP_201_CREATED)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+class TOTPVerifyView(views.APIView):
+    """
+    Use this endpoint to verify/enable a TOTP device
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request, token, format=None):
+        user = request.user
+        device = get_user_totp_device(self, user)
+        if not device == None and device.verify_token(token):
+            if not device.confirmed:
+                device.confirmed = True
+                device.save()
+            token = get_custom_jwt(user, device)
+            return Response({'token': token}, status=status.HTTP_201_CREATED)
         return Response(status=status.HTTP_400_BAD_REQUEST)
