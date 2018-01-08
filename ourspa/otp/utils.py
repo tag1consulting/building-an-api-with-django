@@ -2,6 +2,8 @@ from calendar import timegm
 from datetime import datetime
 from rest_framework_jwt.compat import get_username, get_username_field
 from rest_framework_jwt.settings import api_settings
+from rest_framework_jwt.authentication import JSONWebTokenAuthentication
+from rest_framework_jwt.utils import jwt_decode_handler
 from django_otp.models import Device
 
 
@@ -48,3 +50,25 @@ def get_custom_jwt(user, device):
 
     payload = jwt_otp_payload(user, device)
     return jwt_encode_handler(payload)
+
+def otp_is_verified(self, request):
+    """
+    Helper to determine if user has verified OTP.
+    """
+    auth = JSONWebTokenAuthentication()
+    jwt_value = auth.get_jwt_value(request)
+    if jwt_value is None:
+        return False
+
+    payload = jwt_decode_handler(jwt_value)
+    persistent_id = payload.get('otp_device_id')
+
+    if persistent_id:
+        device = Device.from_persistent_id(persistent_id)
+        if (device is not None) and (device.user_id != request.user.id):
+            return False
+        else:
+            # Valid device in JWT
+            return True
+    else:
+        return False
